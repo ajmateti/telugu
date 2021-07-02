@@ -1,0 +1,323 @@
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <style>
+        html {
+            position: relative;
+            min-height: 100%;
+        }
+
+        body {
+            margin-bottom: 60px;
+            /* Margin bottom by footer height */
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            /* Set the fixed height of the footer here */
+            line-height: 60px;
+            /* Vertically center the text there */
+            background-color: #f5f5f5;
+        }
+
+        .jumbotron {
+            height: 80vh;
+        }
+
+        .movie_btn {
+            width: 2.2rem;
+            height: 3rem;
+        }
+    </style>
+    <title>Telugu Movies Game</title>
+
+</head>
+
+<body onload="">
+    <btn onclick="location.href = 'https://telugu.justdo.click/login/'" id="welcome_user"
+        class="float-end btn btn-lg  mx-2 my-2">Login</btn><br><br>
+    <div class="jumbotron jumbotron-fluid vertical-center">
+        <div class="container">
+            <div class="text-center">
+                <h1 class="display-2 my-4">GUESS THE TELUGU MOVIE
+                    <div class="card text-center mx-auto bg-light mt-2">
+                        <div id="movie_name" class="card-body">
+                        </div>
+                    </div>
+            </div>
+            <div class="mx-auto text-center">
+                <div id="guesses_message">
+                    <h1 class="display-4 my-3">Number of guesses
+                        left:
+                        <span id="guesses_left">6</span>
+                    </h1>
+                </div>
+                <h1 id="better_luck" class="display-5 my-3"></h1>
+                <h1 id="result" class="display-5 my-3"></h1>
+
+                <div id="clue1"> </div>
+                <div id="clue2"> </div>
+                <div id="clue3"> </div>
+                <div id="play_again_div" class="w-full">
+                </div>
+                <div class="card text-center mx-auto bg-light font px-1" style="max-width: 35rem;">
+                    <div id="keyboard" class="card-body">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        var transparent_classes = "bg-transparent py-2 px-4 rounded".split(" ")
+        var chars_left = 0;
+        var MOVIE = $MOVIE;
+        var year = $YEAR
+        var director = $DIRECTOR
+        var actor = $ACTOR
+        var classes = "btn btn-outline-primary mx-1 my-1".split(" ")
+        var clue_classes = "btn btn-primary btn-lg my-1".split(" ")
+        var play_again_classes = "btn btn-outline-success btn-lg invisible mb-3 mt-1".split(" ")
+        var clue_list = []
+        var displayed_clues = []
+        var username = ''
+        
+        function setCookie(name,value,days) {
+            var expires = "";
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days*24*60*60*1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+        }
+        function getCookie(name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for(var i=0;i < ca.length;i++) {
+                var c = ca[i];
+                while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+            }
+            return null;
+        }
+
+        function refreshPage() {
+            window.location.reload();
+        }
+
+        function disableButton(s) {
+            var btn = document.getElementById("Letter" + s)
+            btn.disabled = true;
+            btn.classList.remove("btn-outline-primary");
+            btn.classList.add("btn-outline-light")
+        }
+
+        function addLetter(s) {
+            console.log(s);
+            var blocks = document.getElementsByClassName(btoa(s));
+            var guesses_left = document.getElementById("guesses_left");
+            var n = parseInt(guesses_left.innerText)
+            if (n == 0 || chars_left == 0) {
+                return
+            }
+            if (blocks.length == 0) {
+                console.log("Wrong guess!")
+                n -= 1;
+                guesses_left.innerText = n;
+            }
+            else {
+                chars_left -= blocks.length
+                for (i = 0; i < blocks.length; i++) {
+                    var block = blocks[i];
+                    block.innerText = s;
+                    block.classList.remove("btn-secondary")
+                    block.classList.add("btn-dark")
+                }
+            }
+            disableButton(s);
+
+            if (n == 0 || chars_left == 0) {
+                var result = document.getElementById("result");
+                var better_luck = document.getElementById('better_luck')
+                var play_again_div = document.getElementById("play_again_div");
+                play_again = document.createElement("BUTTON")
+                play_again.classList.add(...play_again_classes)
+                play_again.innerText = 'Play Again'
+                play_again.addEventListener("click", (e) => {
+                    refreshPage()
+                }, false);
+                play_again_div.appendChild(play_again)
+                if (n == 0) {
+                    result.classList.add("text-info")
+                    result.innerText = "The movie is " + atob(MOVIE)
+                    better_luck.classList.add("text-danger")
+                    if (username) better_luck.innerText = "Better luck next time, " + username + "!"
+                    else better_luck.innerText = "Better luck next time!"
+                }
+                else if (chars_left == 0) {
+                    result.classList.add("text-primary")
+                    if (username) result.innerText = "Nice work, " + username + "!"
+                    else result.innerText = "You won the game!"
+                }
+                play_again.classList.remove("invisible")
+                displayAllClues();
+                removeMessage();
+            }
+        }
+
+        function removeMessage() {
+            message = document.getElementById('guesses_message')
+            message.innerHTML = ''
+        }
+
+        var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        var res = str.split("");
+
+        function loadKeyboard() {
+            var keyboard = document.getElementById('keyboard');
+            for (i = 0; i < 26; i++) {
+                text = str[i];
+                var btn = document.createElement("BUTTON");
+                btn.innerText = text;
+                keyboard.appendChild(btn);
+                btn.classList.add('key');
+                btn.classList.add(...classes)
+                btn.id = "Letter" + text;
+                btn.addEventListener("click", (e) => {
+                    addLetter(e.target.innerText)
+                }, false);
+            }
+        }
+
+        function loadMovie() {
+            var name = atob(MOVIE)
+            var movie_classes = "movie_btn btn btn-secondary mx-1 my-1 disabled".split(" ")
+            name = name.toUpperCase()
+            var movie_name = document.getElementById('movie_name');
+            for (i = 0; i < name.length; i++) {
+                if (name[i] !== " ") {
+                    var text = btoa(name[i]);
+                    var item = document.createElement("BUTTON");
+                    item.innerText = " "
+                    item.classList.add(text)
+                    item.classList.add(...movie_classes)
+                    chars_left += 1
+                }
+                else {
+                    var item = document.createElement("SPAN");
+                    item.innerText = "__"
+                    item.classList.add(...transparent_classes)
+                }
+                movie_name.appendChild(item)
+            }
+            // movie_name.innerText = name;
+        }
+
+        function displayAllClues() {
+            for (i = 0; i < clue_list.length; i++) {
+                var clue = clue_list[i]
+                if (displayed_clues.indexOf(clue) === -1) displayClue(clue)
+            }
+        }
+
+        function displayClue(item) {
+            classes = item.classList
+            if (classes.contains('clue1')) {
+                div = document.getElementById('clue1')
+                year = atob(year)
+                div.innerHTML = '<h1 class="display-6 my-3"> Year - ' + year + '<h1>'
+            }
+            else if (classes.contains('clue2')) {
+                div = document.getElementById('clue2')
+                director = atob(director)
+                div.innerHTML = '<h1 class="display-6 my-3"> Director - ' + director + '<h1>'
+            }
+            else if (classes.contains('clue3')) {
+                div = document.getElementById('clue3')
+                actor = atob(actor)
+                div.innerHTML = '<h1 class="display-6 my-3"> Stars - ' + actor + '<h1>'
+            }
+            displayed_clues.push(item)
+        }
+
+        function add_clue(clue, text) {
+            var clue_div = document.getElementById(clue);
+            var item = document.createElement("BUTTON");
+            clue_list.push(item)
+            item.innerText = text
+            item.classList.add(...clue_classes)
+            item.classList.add(clue)
+            item.addEventListener("click", (e) => {
+                displayClue(e.target)
+            }, false)
+            clue_div.appendChild(item)
+        }
+
+        function get_auth() {
+            try {
+
+                var l = window.location.href;
+                var token = l.substr(l.search('#') + 1);
+                var auth = token.split('id_token=')[1].split('&')[0];
+                if(auth) setCookie("auth", auth, null);
+                window.location.href = "https://telugu.justdo.click/";
+                return auth;
+            }
+            catch (error) {
+                console.log(error);
+            }
+        }
+
+        function get_user() {
+
+            var url = 'https://telugu.justdo.click/login/';
+            var auth = get_auth() 
+            if (auth == null)
+            {
+                auth = getCookie("auth")
+            }
+            if (auth) {
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.open("GET", url, true);
+                xmlhttp.setRequestHeader("Authorization", auth);
+                xmlhttp.onreadystatechange = function () {
+                    if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
+                        resp = xmlhttp.response;
+                        name = JSON.parse(resp).name
+                        if (name != '') username = name.charAt(0).toUpperCase() + name.slice(1);
+                        console.log(username)
+                        user = document.getElementById("welcome_user")
+                        user.innerHTML = "Welcome, " + username
+                        user.classList.add("disabled")
+                    }
+                }
+                xmlhttp.send();
+            }
+        }
+
+        function loadScript() {
+            add_clue('clue1', 'Year')
+            if (director) {
+                add_clue('clue2', 'Director')
+            }
+            if (actor) {
+                add_clue('clue3', 'Actor')
+            }
+            loadKeyboard();
+            loadMovie(MOVIE);
+            get_user();
+        }
+        loadScript()
+    </script>
+
+</body>
+
+</html>
